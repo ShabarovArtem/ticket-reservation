@@ -1,0 +1,84 @@
+## Бронирования билетов
+
+### Установка
+
+```bash
+npm ci
+```
+
+### Запуск
+
+#### 1) Поднять PostgreSQL через docker-compose
+
+Переменные окружения:
+Создать .env с
+
+- `POSTGRES_HOST`
+- `POSTGRES_PORT`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_DB`
+- `PORT`
+
+```bash
+docker-compose up -d
+```
+
+#### 2) Запустить миграции
+
+```bash
+npm run migration:run
+```
+
+#### 3) Запустить приложение
+
+Запуск:
+
+```bash
+npm run start:dev
+```
+
+### Как создать места
+
+`POST /seats` — вспомогательная ручка для подготовки данных перед бронированием.
+
+#### Postman
+
+- **Method**: `POST`
+- **URL**: `http://localhost:{{port}}/seats`
+- **Headers**: `Content-Type: application/json`
+- **Body (raw / JSON)**:
+
+```json
+{
+  "seatId": "A-1"
+}
+```
+
+Создание мест намеренно сделано упрощённо для тестового задания — при любой ошибке создания возвращается «место уже
+существует».
+
+### Как забронировать место
+
+`POST /reserve` принимает `userId` и `seatId`.
+
+#### Postman
+
+- **Method**: `POST`
+- **URL**: `http://localhost:{{port}}/reserve`
+- **Headers**: `Content-Type: application/json`
+- **Body (raw / JSON)**:
+
+```json
+{
+  "userId": "u1",
+  "seatId": "A-1"
+}
+```
+
+### Почему PostgreSQL, а не Redis
+
+PostgreSQL, потому что с ним проще и естественнее работать с ACID транзакциями в NestJS/TypeORM. Возможность
+использовать атомарный UPDATE с условием. Также можно было обернуть операцию бронирования в одну транзакцию (проверка на
+существования места, его статус, бронирование), повесить блокировку на строку места. В Redis для того же эффекта
+пришлось бы отдельно реализовывать механизм локов, следить за их временем жизни и обрабатывать пограничные случаи.
